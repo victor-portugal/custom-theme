@@ -1,0 +1,13 @@
+administer pedido:
+  title: 'Administer pedido settings'
+  restrict access: true
+access pedido overview:
+  title: 'Access pedido overview page'
+delete pedido:
+  title: Delete pedido
+create pedido:
+  title: Create pedido
+view pedido:
+  title: View pedido
+edit pedido:
+  title: Edit pedido

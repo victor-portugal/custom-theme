@@ -1,0 +1,8 @@
+name: Set Total Price
+description: Hook to set total price of the Bill
+package: Custom
+type: module
+core_version_requirement: 9.x
+
+libraries: 
+  - setTotalPrice/set-total-price

@@ -1,0 +1,5 @@
+name: Edited by Hook
+description: Hook to alter the edited by in form edit pedido
+package: Custom
+type: module
+core_version_requirement: 9.x

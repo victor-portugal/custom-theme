@@ -1,0 +1,10 @@
+entity.pedido.settings:
+  title: Pedido
+  description: Configure a Pedido entity type
+  route_name:  entity.pedido.settings
+  parent: system.admin_structure
+entity.pedido.collection:
+  title: Pedidos
+  description: List of pedidos
+  route_name: entity.pedido.collection
+  parent: system.admin_content

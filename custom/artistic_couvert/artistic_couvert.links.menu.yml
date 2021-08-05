@@ -1,0 +1,6 @@
+
+artistic_couvert.settings:
+  title: Configurar Couvert Artistico
+  parent: system.admin_config_system
+  route_name: artistic_couvert.settings
+  weight: 10

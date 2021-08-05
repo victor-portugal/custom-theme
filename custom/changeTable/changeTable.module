@@ -1,0 +1,35 @@
+<?php
+
+/**
+ * Implements hook_page_attachments().
+ */
+
+function changeTable_page_attachments(array &$attachments) {
+
+
+  
+    // Conditionally attach an asset to the page.
+
+    $current_path = \Drupal::service('path.current')->getPath();
+    
+      if ($current_path == '/pedidoschef')  {
+        $attachments['#attached']['library'][] = 'changeTable/change-Table'; }
+
+        if ($current_path == '/pedidosgarcom')  {
+          $attachments['#attached']['library'][] = 'changeTable/change-Table'; }
+
+          if ($current_path == '/cardapio')  {
+            $attachments['#attached']['library'][] = 'changeTable/change-Table'; }
+
+
+          if ($current_path == '/painel-visual')  {
+            $attachments['#attached']['library'][] = 'changeTable/change-Table'; }
+
+    // if (!\Drupal::currentUser()
+    //   ->hasPermission('view content')) {
+    //   $attachments['#attached']['library'][] = 'changeTable/change-Table';
+
+    // }
+
+
+  }

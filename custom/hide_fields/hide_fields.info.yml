@@ -1,0 +1,4 @@
+name: Hide Fields Based On Role
+type: module
+description: 'Esconde fields da entidade pedido de acordo com a role de quem o acessa, durante a edição de um pedido.'
+core_version_requirement: '^8 || ^9'

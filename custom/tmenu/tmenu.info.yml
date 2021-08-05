@@ -1,0 +1,4 @@
+name: tmenu
+type: module
+description: 'Faz com que apenas os cardápios que possuem o Tempo de Duração coincidindo com o horário corrente sejam exibidos'
+core_version_requirement: '^8 || ^9'

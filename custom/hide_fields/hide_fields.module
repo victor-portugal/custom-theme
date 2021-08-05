@@ -1,0 +1,71 @@
+<?php
+/**
+ * Implements hook_entity_field_access().
+ */
+use \Drupal\Core\Field\FieldDefinitionInterface;
+use \Drupal\Core\Field\FieldItemListInterface;
+use \Drupal\Core\Session\AccountInterface;
+use \Drupal\Core\Access\AccessResult;
+
+function hide_fields_entity_field_access($operation, FieldDefinitionInterface $field_definition, AccountInterface $account, FieldItemListInterface $items = NULL) {
+
+  $user_roles = \Drupal::currentUser()->getRoles();
+  $current_url = \Drupal::service('path.current')->getPath();
+  list($l, $ad, $cnt, $pd, $id, $ed) = explode("/", $current_url);
+
+  /**
+   * Como a Hook tem acesso a todos os formulários foi feita uma condicional par avaliar se é um formulario de edição
+   * E se não é a criação de um novo pedido. O $id ou está recebendo o id do pedido ou um "add" quando se trata de um novo
+   * -> Essa hook tem um diferencial que sempre é necessário colocar a saída do condicional (o else neutral), se nao colocar da pau
+   */
+  if ($operation == 'edit' && $id != 'add') { 
+    $int_id = (int) $id;
+
+    $status_anterior = $int_id != null && $pd != 'conta-entity' ? \Drupal::entityTypeManager()->getStorage('pedido')->load($int_id)->get('status_pedido')->getValue()[0]['value'] : 0;
+    
+    if ($field_definition->getName() == 'valor_total' &&
+        $operation == 'edit' &&
+        in_array('cozinheiro', $user_roles)) {
+      return AccessResult::forbidden();
+    }
+    if ($field_definition->getName() == 'field_novos_produtos' &&
+        $operation == 'edit' &&
+        in_array('cozinheiro', $user_roles)) {
+      return AccessResult::forbidden();
+    }
+    if ($field_definition->getName() == 'nome_mesa' &&
+        $operation == 'edit' &&
+        in_array('cozinheiro', $user_roles)) {
+      return AccessResult::forbidden();
+    }
+    if ($field_definition->getName() == 'observacao' &&
+        $operation == 'edit' &&
+        in_array('cozinheiro', $user_roles)) {
+      return AccessResult::forbidden();
+    }
+    if ($field_definition->getName() == 'field_novos_produtos' &&
+        $operation == 'edit' &&
+        in_array('garcon', $user_roles) &&
+        $status_anterior != 'aberto') {
+      return AccessResult::forbidden();
+    }
+    if ($field_definition->getName() == 'nome_mesa' &&
+        $operation == 'edit' &&
+        in_array('garcon', $user_roles) &&
+        $status_anterior != 'aberto') {
+      return AccessResult::forbidden();
+    }
+    if ($field_definition->getName() == 'observacao' &&
+        $operation == 'edit' &&
+        in_array('garcon', $user_roles) &&
+        $status_anterior != 'aberto') {
+      return AccessResult::forbidden();
+    }    
+    else {
+      return AccessResult::neutral();
+    }
+  }
+  else {
+    return AccessResult::neutral();
+  }
+ }

@@ -1,0 +1,11 @@
+<?php
+
+/**
+ * Implements hook_form_alter().
+ */
+function hideInputNode_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  
+    if($form_id == 'node_criar_cardapio_form' || $form_id == 'pedido_add_form' || $form_id == 'pedido_edit_form') {
+        $form['#attached']['library'][] = 'hideInputNode/hide-input-node';
+    }
+}

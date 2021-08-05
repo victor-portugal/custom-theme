@@ -1,0 +1,10 @@
+entity.conta_entity.settings:
+  title: Conta
+  description: Configure a Conta entity type
+  route_name:  entity.conta_entity.settings
+  parent: system.admin_structure
+entity.conta_entity.collection:
+  title: Contas
+  description: List of contas
+  route_name: entity.conta_entity.collection
+  parent: system.admin_content

@@ -1,0 +1,7 @@
+name: Conta
+type: module
+description: 'Provides a conta entity.'
+package: Custom
+core: 8.x
+core_version_requirement: ^8 || ^9
+configure: entity.conta_entity.settings

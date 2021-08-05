@@ -1,0 +1,6 @@
+style_css:  
+  css: 
+    theme:
+      css/hooks_conta.css: {}
+  depedencies: 
+    - core/jquery

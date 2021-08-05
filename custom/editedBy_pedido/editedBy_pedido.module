@@ -1,0 +1,43 @@
+<?php
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\node\Entity\Node;
+
+function editedBy_pedido_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+
+  if ($form_id == 'pedido_edit_form' || $form_id == 'pedido_add_form' ) {
+    $form['#validate'][] = 'editedBy_pedido_node_form_submit';
+  }
+}
+
+  function editedBy_pedido_node_form_submit($form, \Drupal\Core\Form\FormStateInterface $form_state) {
+    $node = $form_state->getFormObject()->getEntity();
+
+    //gets the actual logged user id
+    $Auser = \Drupal::currentUser()->id();
+
+    //get the value from the old status (before the change in this edit)
+    $status = $node->get('status_pedido')->getValue()[0]['value'];
+    
+    //Verify if the actual status is "Em andamento"
+    if ($status == 'em_andamento') {
+      //get the user who is the last editor (who setted status to "Em andamento")
+      $lastEdited = $node->get('edited_by')->getValue()[0]['target_id'];
+      //compare the last editor with the actual logged in user, to see if they are different 
+      if($lastEdited != $Auser){
+        //sets a error if they are not same user
+        $form_state->setErrorByName('edited_by', t('Apenas o usuário que alterou o status para "Em andamento" pode mudar para "Pronto".', ['%edited_by' => $Auser]));
+      }
+    }
+
+    //sets the actual logged user as new editor
+    $node->get('edited_by')->setValue($Auser);
+
+    //gets the value from the new editor that was inserted in edited_by
+    $editor = $node->get('edited_by')->getValue()[0]['target_id'];
+
+    if($editor != $Auser){
+      $form_state->setErrorByName('edited_by', t('O usuário editor deve ser o mesmo que o seu usuário atual', ['%edited_by' => $Auser]));
+    }
+  }
+  

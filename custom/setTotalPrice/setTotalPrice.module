@@ -1,0 +1,81 @@
+<?php
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element\Form;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\InvokeCommand;
+use Drupal\Core\Ajax\ReplaceCommand;
+use Drupal\Core\Ajax\OpenModalDialogCommand;
+use Drupal\paragraphs\Plugin\Field\FieldWidget\ParagraphsWidget;
+
+
+/**
+ * Nos formularios de adicionar pedido e editar pedido o sistema efetua uma
+ * validação do preço total, e adiciona a biblioteca set-total-price,
+ * responsável por alterar dinâmicamente o preço total
+ *
+ * @param [type] $form
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ * @param [type] $form_id
+ * @return void
+ */
+function setTotalPrice_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+    if ($form_id == 'pedido_add_form' || $form_id == 'pedido_edit_form') {
+        $form['#validate'][] = 'setTotalPrice_node_form_submit';
+        $form['#attached']['library'][] = 'setTotalPrice/set-total-price';
+      }
+}
+
+
+/**
+ * A função seta o valor total do pedido quando é submetido
+ *
+ * @param [type] $form
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ * @return void
+ */
+function setTotalPrice_node_form_submit(&$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+    $target_id = array();
+    $quantidades = array();
+    $total_price = 0;
+    $novos_pedidos = $form_state->getValue('field_novos_produtos');
+    for($i = 0; $i < count($novos_pedidos) - 1; $i++) {
+      array_push($target_id, intval($novos_pedidos[$i]['subform']['field_produto'][0]['target_id']));
+      array_push($quantidades, intval($novos_pedidos[$i]['subform']['field_quantidade'][0]['value']));
+    }
+    $prices = getAllPrices($target_id, $form_state);
+    for($i = 0; $i < count($target_id); $i++) {
+        $total_price += $quantidades[$i] * $prices[$i];
+    }
+    $form_state->setValue('valor_total',[['value' => 'R$'.number_format(floatval($total_price), 2)]]);
+    
+}
+
+/**
+ * A função itera sobre o banco de dados e retora o 
+ * preço dos produtos para que o mesmo possa
+ * ser multiplicado pela quantidade na função set_Total_Price_node_form_submit
+ *
+ * @param [type] $id
+ * @param [type] $form_state
+ * @return array
+ */
+function getAllPrices($id, $form_state) {
+    $values = array();
+
+    for($i = 0; $i < count($id); $i++) { 
+        if ($id[$i] == 0) {
+            $form_state->setErrorByName('field_novos_produtos', t('Itens do cardápio não podem ser vazios'));
+        } else {
+            array_push($values, \Drupal::entityTypeManager()->getStorage('node')->load($id[$i])->get('field_valor')->getValue()[0]['value']);
+        }
+        
+    }
+    return $values;
+  }
+  
+
+  
+
+
+  

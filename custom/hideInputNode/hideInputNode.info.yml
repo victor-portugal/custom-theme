@@ -1,0 +1,8 @@
+name: Hide Input Node
+description: Hook to hide the node number on a input
+package: Custom
+type: module
+core_version_requirement: 9.x
+
+libraries:
+  - hideInputNode/hide-input-node

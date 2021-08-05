@@ -1,0 +1,9 @@
+
+
+artistic_couvert.settings:
+  path: '/admin/config/system/settings'
+  defaults:
+    _title: 'Configurar Couvert Artistico'
+    _form: 'Drupal\artistic_couvert\Form\SettingsForm'
+  requirements:
+    _permission: 'administer site configuration'

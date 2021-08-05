@@ -1,0 +1,6 @@
+change-Table:  
+  css: 
+    theme:
+      css/changeTable.css: {}
+  depedencies: 
+    - core/jquery

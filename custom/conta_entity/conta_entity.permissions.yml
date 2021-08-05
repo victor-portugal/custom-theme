@@ -1,0 +1,13 @@
+administer conta:
+  title: 'Administer conta settings'
+  restrict access: true
+access conta overview:
+  title: 'Access conta overview page'
+delete conta:
+  title: Delete conta
+create conta:
+  title: Create conta
+view conta:
+  title: View conta
+edit conta:
+  title: Edit conta

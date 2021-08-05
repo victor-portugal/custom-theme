@@ -1,0 +1,7 @@
+name: artistic-couvert
+type: module
+description: 'Provides an artistic-couvert configuration entity.'
+package: Custom
+core: 8.x
+core_version_requirement: ^8 || ^9
+configure: entity.artistic_couvert.collection

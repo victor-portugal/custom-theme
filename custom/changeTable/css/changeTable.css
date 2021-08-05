@@ -1,0 +1,149 @@
+
+
+
+ .view-garcom-obs { 
+    width: 42vh !important; 
+
+} 
+
+.view-garcom-prods { 
+    width: 20vh !important;
+    
+ 
+} 
+
+.field--name-field-quantidade {
+    display: flex !important;
+}
+
+.field__label::after {
+    content: ': ' !important;
+    padding-right: 2px !important;
+    text-indent: 5em;
+}
+
+.field__item{
+    content: '   ' !important;
+}
+
+
+
+.views-exposed-form {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    text-align: center;
+}
+
+  #edit-submit-pedidos-do-chef   {
+    
+
+        background-image: url(../check-circle-regular.svg) !important;
+        background-repeat: no-repeat;
+        border-radius: 0;
+        border: 0;
+        color: transparent;
+        margin-bottom: 28px;
+        margin-top: -10px;
+        margin-left: 1.2vw
+
+        
+        } 
+        
+        #edit-submit-pedidos-do-chef:hover {
+            background-color: transparent;
+            border-color: transparent;
+        }
+
+  
+
+#edit-submit-cardapioview {
+
+background-image: url(../check-circle-regular.svg) !important;
+background-repeat: no-repeat;
+border-radius: 0;
+border: 0;
+color: transparent;
+margin-bottom: 28px;
+margin-top: -10px;
+
+} 
+
+#edit-submit-cardapioview:hover {
+    background-color: transparent;
+}
+
+
+#edit-status-pedido-filter--description {
+    color: gray;
+    font-size: 11px;
+    padding-top: 20px;
+    border-radius: 5;
+}
+
+
+.js-quickedit-page-title {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    text-align: center;
+    font-size: 24px;
+    /* padding-bottom: 8vh;
+    padding-top: 6vh; */
+}
+
+#edit-status-pedido-filter {
+    color: #333;
+    background-color: white;
+    padding: inherit;
+    border-radius: 5px;
+    border-color: red;
+    padding: 6px;
+}
+
+
+#edit-status-pedido-1 {
+    color: #333;
+    background-color: white;
+    padding: inherit;
+    border-radius: 5px;
+    border-color: red;
+    padding: 6px;
+}
+
+
+#edit-status-pedido-1--description {
+    color: gray;
+    font-size: 11px;
+    padding-top: 20px;
+    border-radius: 5;
+    
+}
+
+
+#edit-submit-lista-de-pedidos {
+background-image: url(../check-circle-regular.svg) !important;
+background-repeat: no-repeat;
+border-radius: 0;
+border: 0;
+color: transparent;
+margin-bottom: 28px;
+margin-top: -10px;
+margin-left: 1.2vw
+}
+
+#edit-submit-lista-de-pedidos:hover {
+    background-color: transparent;
+}
+
+/* Mexendo na pagina Painel Visual */
+
+
+table {
+    margin-bottom: 70px !important;
+}
+
+header {
+   text-align: center !important;
+   margin-bottom: 40px !important;
+}

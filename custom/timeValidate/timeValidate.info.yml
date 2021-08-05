@@ -1,0 +1,5 @@
+name: Validate Time Hook
+description: Hook to validate time entry in form criar_cardapio
+package: Custom
+type: module
+core_version_requirement: 9.x

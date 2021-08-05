@@ -1,0 +1,22 @@
+entity.conta_entity.settings:
+  title: Settings
+  route_name: entity.conta_entity.settings
+  base_route: entity.conta_entity.settings
+entity.conta_entity.view:
+  title: View
+  route_name: entity.conta_entity.canonical
+  base_route: entity.conta_entity.canonical
+entity.conta_entity.edit_form:
+  title: Edit
+  route_name: entity.conta_entity.edit_form
+  base_route: entity.conta_entity.canonical
+entity.conta_entity.delete_form:
+  title: Delete
+  route_name: entity.conta_entity.delete_form
+  base_route: entity.conta_entity.canonical
+  weight: 10
+entity.conta_entity.collection:
+  title: Conta
+  route_name: entity.conta_entity.collection
+  base_route: system.admin_content
+  weight: 10

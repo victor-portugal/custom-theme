@@ -1,0 +1,5 @@
+set-total-price:
+  js:
+    js/setTotalPrice.js: {}
+  depedencies: 
+    - core/jquery

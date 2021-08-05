@@ -1,0 +1,8 @@
+hide-input-node:  
+  css: 
+    theme:
+      css/hideInputNode.css: {}
+  js:
+    js/hideInputNode.js: {}
+  depedencies: 
+    - core/jquery

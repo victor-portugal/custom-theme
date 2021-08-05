@@ -1,0 +1,7 @@
+entity.pedido.settings:
+  path: 'admin/structure/pedido'
+  defaults:
+    _form: '\Drupal\pedido_entity\Form\PedidoSettingsForm'
+    _title: 'Pedido'
+  requirements:
+    _permission: 'administer pedido'

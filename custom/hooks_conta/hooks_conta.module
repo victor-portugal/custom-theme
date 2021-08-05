@@ -1,0 +1,452 @@
+<?php
+/**
+ * Implements hook_form_alter
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element\Form;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\AlertCommand;
+use Drupal\Core\Ajax\HtmlCommand;
+
+function hooks_conta_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  if ($form_id == 'conta_entity_add_form' || $form_id == 'conta_entity_edit_form') {
+
+    // Calling ajax
+    AjaxOnConta($form);
+
+    // Css Styling for the form
+    $form['#attached']['library'][] = 'conta_entity/style_css';
+
+    // Form validate
+    $form['#validate'][] = 'hooks_conta_node_form_submit';
+  }
+}
+
+/**
+ * Form submit verification
+ */
+function hooks_conta_node_form_submit($form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  $mesa = $form_state->getValue('field_conta_mesa_relacionada');
+  $nid = NULL;
+  $nid = $mesa[0]['target_id'];
+  $database = \Drupal::database();
+
+  if ($nid == NULL){
+    $form_state->setErrorByName('field_conta_mesa_relacionada', t('Por favor, selecione uma mesa', ['%field_conta_mesa_relacionada' => $nid]));
+  } else {
+    $pedidos_query = $database->query("SELECT id, valor_total, status_pedido FROM pedido_field_data WHERE nome_mesa =" . $nid);
+    $resultPedidos = $pedidos_query->fetchAll();
+
+    foreach($resultPedidos as $pedidos){
+      if($pedidos->status_pedido != "entregue"){
+        $form_state->setErrorByName('field_conta_mesa_relacionada', t('Ainda existem pedidos não entregues para a mesa escolhida', ['%field_conta_mesa_relacionada' => $pedidos->status_pedido]));
+      } 
+    }
+  }
+
+}
+
+/**
+ * Adds ajax tags to the form
+ */
+function AjaxOnConta(&$form) {
+  // Says to ajax what field to watch
+  $form['valor_pago']['widget'][0]['value']['#ajax'] = array(
+    'callback' => 'paymentValueCallback',
+    'event' => 'change',
+    'disable-refocus' => TRUE,
+    'progress' => [
+      'type' => 'throbber',
+      'message' => t(''),
+    ],
+  );
+
+  $form['field_gorjeta']['widget']['value']['#ajax'] = array (
+    'callback' => 'displayPaymentCallback',
+    'event' => 'change',
+    'disable-refocus' => TRUE,
+    'progress' => [
+      'type' => 'throbber',
+      'message' => t(''),
+    ],
+  );
+
+  $form['field_t10_']['widget']['value']['#ajax'] = array (
+    'callback' => 'displayPaymentCallback',
+    'event' => 'change',
+    'disable-refocus' => TRUE,
+    'progress' => [
+      'type' => 'throbber',
+      'message' => t(''),
+    ],
+  );
+
+  $form['field_v']['widget'][0]['value']['#ajax'] = array(
+    'callback' => 'displayPaymentCallback',
+    'event' => 'change',
+    'disable-refocus' => TRUE,
+    'progress' => [
+      'type' => 'throbber',
+      'message' => t(''),
+    ],
+  );
+
+  $form['tipo_de_pagamento']['widget']['#ajax'] = array (
+    'callback' => 'paymentTypeCallback',
+    'event' => 'change',
+    'disable-refocus' => TRUE,
+    'progress' => [
+      'type' => 'throbber',
+      'message' => t(''),
+    ],
+  );
+
+  $form['field_conta_mesa_relacionada']['widget']['#ajax'] = array(
+    'callback' => 'displayItensCallback',
+    'disable-refocus' => TRUE,
+    'progress' => [
+      'type' => 'throbber',
+      'message' => t(''),
+    ],
+  );
+
+  $form['payment'] = array (
+    '#type' => 'markup',
+    '#markup' => '<div class = "payment_message"></div>',
+    '#weight' => 800,
+  );
+
+  $form['itens'] = array(
+    '#type' => 'markup',
+    '#markup' => '<div class = "itens_message"></div>',
+    '#weight' => 1000,
+  );
+}
+
+/**
+ * Implements a callback for the PAYMENT TYPE selection
+ */
+function paymentTypeCallback(&$form, FormStateInterface $form_state) {
+
+  $mesa = $form_state->getValue('field_conta_mesa_relacionada');
+  $nid = $mesa[0]['target_id'];
+
+  // Caso o usuário não tenha selecionado uma mesa, termine a execução da callback
+  if ($nid == NULL) {
+    return;
+  }
+  
+  $valor_recebido = $form_state->getValue('valor_pago')[0]['value'];
+
+  // Caso o usuário não tenha informado o valor pago pelo cliente , termine a execução da callback
+  if ($valor_recebido == NULL) {
+    return;
+  }
+
+  return displayPaymentCallback($form, $form_state);
+}
+/**
+ * Implements a callback for the PAYMENT VALUE selection
+ */
+function paymentValueCallback(&$form, FormStateInterface $form_state) {
+
+  $mesa = $form_state->getValue('field_conta_mesa_relacionada');
+  $nid = $mesa[0]['target_id'];
+
+  // Caso o usuário não tenha selecionado uma mesa, termine a execução da callback e retorne uma mensagem contextualizada :
+  if ($nid == NULL) {
+    $response = new Drupal\Core\Ajax\AjaxResponse();
+    $Text = 'OOPS! Lembre de selecionar uma mesa antes de informar o valor pago pelo cliente !';
+    $response->addCommand(new AlertCommand($Text));
+    return $response;
+  }
+
+  return displayPaymentCallback($form, $form_state);
+}
+/**
+ * Implements THE WRAPPER callback for all options involving payment
+ */
+function displayPaymentCallback(&$form, FormStateInterface $form_state) {
+
+  $mesa = $form_state->getValue('field_conta_mesa_relacionada');
+  $nid = $mesa[0]['target_id'];
+
+  $valor_recebido = $form_state->getValue('valor_pago')[0]['value'];
+
+  $tipo_pagamento = $form_state->getValue('tipo_de_pagamento');
+  $valor_couvert = 0;
+  $gorjeta_CB_value = $form_state->getValue('field_gorjeta')['value'];
+  $gorjeta_10_value = $form_state->getValue('field_t10_')['value'];
+
+  /* Select the storage to retrieve every value of "pedido" 
+  start this SQL search to get needed data
+  "SELECT valor_total FROM <db.name>.pedido_field_data WHERE nome_mesa = $nid;"
+  Load every found result in the sql query and save o variable entities */
+  $storage = \Drupal::entityTypeManager()->getStorage('pedido');
+  $query = $storage->getQuery()
+  ->condition('nome_mesa', $nid)
+  ->execute();
+  $entities = $storage->loadMultiple($query);
+
+  //Getting the value from couvert config in database and catching the useful value from it
+  $database = \Drupal::database();
+  $couvertDB = $database->query("SELECT * FROM config WHERE name = 'artistic_couvert.settings';");
+  $resultCouvert = $couvertDB->fetchAll();
+  $couvertEx = explode(";", $resultCouvert[0]->data);
+
+  //making the if condition to see if couvert artistico config returns true (1) or false (0) and setting a value to variable $valor_couvert
+  if ($couvertEx[1] == "i:1") {
+    $valor_couvert = 20;
+  } else {
+    $valor_couvert = 0;
+  }
+
+
+  //for each entities found in the SQL search, get the value of "valor_total" and at the end make a sum of all the values found
+  foreach ($entities as $pedido) {
+    if($pedido->get('status_pedido')->getValue()[0]['value'] == 'pago') {
+
+    } else {
+      $valor = $pedido->get('valor_total')->getValue()[0]['value'];
+      $valor_explode = explode("$", $valor);
+      $valor_float = floatval(str_replace(",", "", $valor_explode[1]));
+      $somaValor = $valor_float + $somaValor;
+    }
+  }
+
+  //if conditions to satisfy all conditions needed in gorjeta
+  if ($gorjeta_CB_value == 1) {
+    if ($gorjeta_10_value == 1) {
+      $gorjeta_valor = 0.1;
+      $valor_totalConta = $somaValor + $valor_couvert + ($somaValor * $gorjeta_valor);
+      $imprimir_valor_gorjeta = $somaValor * $gorjeta_valor;
+    } else {  
+      $gorjeta_valor = $form_state->getValue('field_v')[0];
+      if ($gorjeta_valor['value'] == NULL) {
+        $gorjeta_valor = 0;
+      }
+      $valor_totalConta = $somaValor + $valor_couvert + $gorjeta_valor['value'];
+      $imprimir_valor_gorjeta = $gorjeta_valor['value'];
+    }
+  } else {
+    $gorjeta_valor = 0;
+    $valor_totalConta = $somaValor + $valor_couvert + $gorjeta_valor;
+    $imprimir_valor_gorjeta = ($somaValor + $valor_couvert) * $gorjeta_valor;
+  }
+
+  $troco = $valor_recebido - $valor_totalConta;
+
+  // Criando resposta ajax
+  $response = new Drupal\Core\Ajax\AjaxResponse();
+  $tem_troco = TRUE;
+
+  // Check if the value in variable troco is positive (means that the inserted value in "valor_pago" is greater than sum of all "valor_total" in pedidos)
+  if (number_format(floatval($troco), 2,",",".") < 0) {
+    $tem_troco = FALSE;
+    if ($valor_recebido == NULL) {
+      $Text = 'OPA: Lembre-se de informar o valor pago pelo cliente!';
+    }
+    else {
+      $Text = 'CUIDADO: Valor pago pelo cliente (R$'.$valor_recebido.') é insuficiente para pagar esta conta, cujo total é R$'.$valor_totalConta;
+    }
+    $response->addCommand(new AlertCommand($Text));
+  }
+
+  // Criando div que armazenará os dados referentes ao pagamento :
+  $payment = '<div class = "summary_payment">';
+  $payment .= '<hr>';
+  $payment .= '<p> <b><i> <center>Valores :</center> </i></b>';
+
+  // Check if the "tipo_pagamento" is "dinheiro", if it is, modify $payment div accordingly
+  if ($tipo_pagamento[0]['value'] == "dinheiro") {
+
+    if ($tem_troco) {
+      $payment .= '<p> <b>Troco : </b>'.number_format(floatval($valor_recebido), 2,",",".").' - '.number_format(floatval($valor_totalConta), 2,",",".").' = R$'.number_format(floatval($troco), 2,",",".").'</p>';
+    }
+    $payment .= '<p> <b>Valor do Total da Conta : </b> R$'.number_format($valor_totalConta, 2,",",".").'</p>';
+    if ($valor_couvert != 0 || $imprimir_valor_gorjeta != 0) {
+      $payment .= '<p> <b>Sub-Total (Sem adicionais) : </b> R$ '.' '.number_format(floatval($somaValor), 2,",",".").'</p>';
+    }
+  }
+  else {
+    $payment .= '<p> <b>Valor do Total da Conta : </b> R$'.number_format($valor_totalConta, 2,",",".").'</p>';
+    if ($valor_couvert != 0 || $imprimir_valor_gorjeta != 0) {
+      $payment .= '<p> <b>Sub-Total (Sem adicionais) : </b> R$ '.' '.number_format(floatval($somaValor), 2,",",".").'</p>';
+    }
+  }
+
+  $payment .= '<hr>';
+  $payment .= '<p> <b><i> <center>Adicionais :</center> </i></b>';
+  $payment .= '<p> <b>Gorjeta : </b> R$'.number_format($imprimir_valor_gorjeta, 2,",",".").'</p>';
+  $payment .= '<p> <b>Couvert Artístico : </b> R$'.number_format($valor_couvert, 2,",",".").'</p>';
+  $payment .= '<hr>';
+  $payment .= '</div>';
+
+  // Adicionando comando ajax e retornando-o
+  $response->addCommand (
+    new HtmlCommand (
+      '.payment_message',
+      $payment,
+    )
+  );
+  return $response;
+}
+
+
+/**
+ * Implements a callback that displays all itens related to the selected table, in the form of an html table
+ */
+function displayItensCallback(array &$form, FormStateInterface $form_state) {
+  $mesa = $form_state->getValue('field_conta_mesa_relacionada');
+  $nid = $mesa[0]['target_id'];
+
+  $gorjeta_CB_value = $form_state->getValue('field_gorjeta')['value'];
+  $gorjeta_10_value = $form_state->getValue('field_t10_')['value'];
+
+  // Realizando query na database e guardando os resultados em arrays de arrays :
+  $database = \Drupal::database();
+
+  $itens_query = $database->query (
+    "SELECT conta.id, paragraph.field_produto_target_id, produto.title, quantidade.field_quantidade_value, valor.field_valor_value 
+    FROM paragraph__field_produto paragraph 
+    INNER JOIN node_field_data produto ON paragraph.field_produto_target_id = produto.nid
+    INNER JOIN node__field_valor valor ON paragraph.field_produto_target_id = valor.entity_id
+    INNER JOIN paragraph__field_quantidade quantidade ON paragraph.entity_id = quantidade.entity_id
+    LEFT JOIN pedido__field_novos_produtos pedido ON paragraph.entity_id = pedido.field_novos_produtos_target_id
+    INNER JOIN pedido_field_data conta ON pedido.entity_id = conta.id WHERE conta.nome_mesa =" . $nid
+  );
+  $pedidos_query = $database->query("SELECT id, valor_total, status_pedido FROM pedido_field_data WHERE nome_mesa =" . $nid);
+  $couvert_query = $database->query("SELECT * FROM config WHERE name = 'artistic_couvert.settings';");
+
+  $itens_as_array = json_decode(json_encode( $itens_query->fetchAll() ), true);
+  $pedidos_as_array = json_decode(json_encode( $pedidos_query->fetchAll() ), true);
+  $couvert = $couvert_query->fetchAll();
+
+  // Preparando o dado couvert para uso :
+  $couvertEx = explode(";", $couvert[0]->data);
+  if ($couvertEx[1] == "i:1") {
+    $valor_couvert = 20;
+  } else {
+    $valor_couvert = 0;
+  }
+
+  // Calculando o valor a ser pago pelo cliente. Como os valores estão na forma de strings, utiliza-se floatval + substr para transformá-los em números :
+  foreach ($pedidos_as_array as $val) {
+    if ($val['status_pedido'] == 'pago') {
+
+    } else {
+      $valor = $val['valor_total'];
+      $valor_trimmed = substr($valor, 2, strlen($valor)-2 );
+      $somaValor = floatval( str_replace(',', '', $valor_trimmed) ) + $somaValor;
+    }
+  }
+ 
+  // Se o cliente optar por pagar gorjeta :
+  if ($gorjeta_CB_value == 1) {
+    // Se o cliente optar pela gorjeta padrão de 10% sobre o valor da conta :
+    if ($gorjeta_10_value == 1) {
+      $gorjeta_valor = 0.1;
+      $valor_totalConta = $somaValor + $valor_couvert + ($somaValor * $gorjeta_valor);
+      $imprimir_valor_gorjeta = $somaValor * $gorjeta_valor;
+    // Caso contrário o cliente optou por pagar um valor customizado para a gorjeta
+    } else {  
+      $gorjeta_valor = $form_state->getValue('field_v')[0];
+      $valor_totalConta = $somaValor + $valor_couvert + $gorjeta_valor['value'];
+      $imprimir_valor_gorjeta = $gorjeta_valor['value'];
+    }
+  // Caso contrário, o cliente optou por não pagar gorjeta :
+  } else {
+    $gorjeta_valor = 0;
+    $valor_totalConta = $somaValor + $valor_couvert + $gorjeta_valor;
+    $imprimir_valor_gorjeta = ($somaValor + $valor_couvert) * $gorjeta_valor;
+  }
+
+  // Calculando o preço de cada item e removendo informações desnecessárias :
+  for ($i = 0; $i < count($itens_as_array); $i++){
+    $quantity = $itens_as_array[$i]["field_quantidade_value"];
+    $price = $itens_as_array[$i]["field_valor_value"];
+    $total_price = $quantity * $price;
+    $total_price_as_string = 'R$ ' . strval($total_price) . ' (' . $quantity . ' x ' . $price . ')';
+    array_push($itens_as_array[$i], $total_price_as_string);
+    array_push($itens_as_array[$i], $total_price);
+    unset($itens_as_array[$i]["field_valor_value"]);
+  }
+
+  // Criando div que armazenará a tabela com os itens relacionados a mesa $nid :
+  $itens = '<div class="summary_pedidos">';
+  $itens .= '<p> <b> <i> <center>Itens da conta :</center> </i> </b></p>';
+  foreach ($pedidos_as_array as $pedidos) {
+    if ($pedidos['status_pedido'] == 'pago') {
+
+    } else {
+      $itens .= '<table style = "width:100% , class = "fixed" ">';
+      $itens .= '<col width="20%"/> <col width="40%" /> <col width="20%"/> <col width="20%"/>'; 
+      $itens .= '<p> <b>Pedido [ '.$pedidos['id'].' ] : (</b> Status = '.$pedidos['status_pedido'].' <b>)</b> </p>';
+      $itens .= '<tr> <th>ID :</th> <th>Nome do Produto : </th> <th>Quantidade : </th>  <th>Preço : </th> </tr>';
+
+      $custo_do_pedido = 0;
+      foreach($itens_as_array as $row) {
+        if ($row['id'] == $pedidos['id']) {
+          $custo_do_pedido += $row[1];
+          $counter = 0;
+          
+          $itens .= "<tr>"; 
+          foreach ($row as $cell) {
+            // Skip the first element of the array
+            if ($counter == 0) {
+              $counter ++;
+              continue;
+            }
+            // Skip the last element of the array
+            else if ( $counter == count($row)-1 ) {
+              continue;
+            }
+            else {
+              $counter ++;
+              $itens .= "<td>" . $cell . "</td>";
+            }
+          }
+          $itens .= "</tr>";
+        }
+      }
+      $itens .= "</table>";
+      $itens .= '<p>Valor total do pedido [ '.$pedidos['id'].' ] = R$ '.$custo_do_pedido.'</p>';
+      $custo_do_pedido = 0;
+    }
+  }
+  $itens .= "</div>";
+
+  // Criando div que armazenará os dados referentes ao pagamento :
+  $payment = '<div class = "summary_payment">';
+  $payment .= '<hr>';
+  $payment .= '<p> <b><i> <center>Valores :</center> </i></b>';
+  $payment .= '<p> <b>Valor do Total da Conta : </b> R$'.number_format($valor_totalConta, 2,",",".").'</p>';
+  if ($valor_couvert != 0 || $imprimir_valor_gorjeta != 0) {
+    $payment .= '<p> <b>Sub-Total (Sem adicionais) : </b> R$ '.' '.number_format(floatval($somaValor), 2,",",".").'</p>';
+  }
+  $payment .= '<hr>';
+  $payment .= '<p> <b><i> <center>Adicionais :</center> </i></b>';
+  $payment .= '<p> <b>Gorjeta : </b> R$'.number_format($imprimir_valor_gorjeta, 2,",",".").'</p>';
+  $payment .= '<p> <b>Couvert Artístico : </b> R$'.number_format($valor_couvert, 2,",",".").'</p>';
+  $payment .= '<hr>';
+  $payment .= '</div>';
+
+  // Criando a resposta ajax, que adiciona às divs itens_message e payment_message no final do form outras divs $itens e $payment, respectivamente.
+  $response = new AjaxResponse();
+
+  $response->addCommand (
+    new HtmlCommand (
+      '.itens_message',
+      $itens,
+    )
+  );
+
+  $response->addCommand (
+    new HtmlCommand(
+      '.payment_message',
+      $payment
+    )
+  );
+  return $response;
+}

@@ -1,0 +1,5 @@
+conta_entity.add_form:
+  route_name: entity.conta_entity.add_form
+  title: 'Add conta'
+  appears_on:
+    - entity.conta_entity.collection

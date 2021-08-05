@@ -1,0 +1,8 @@
+name: Change Table View CSS
+description: Hook to change the Pedidos Layout
+package: Custom
+type: module
+core_version_requirement: 9.x
+
+libraries:
+  - changeTable/change-Table

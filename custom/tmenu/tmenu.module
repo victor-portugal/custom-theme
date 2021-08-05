@@ -1,0 +1,37 @@
+<?php
+/**
+ * Implements hook_views_query_alter
+ */
+
+use \Drupal\views\ViewExecutable;
+use \Drupal\views\Plugin\views\query\QueryPluginBase;
+use \Drupal\field\FieldStorageConfigInterface;
+
+function tmenu_views_query_alter(ViewExecutable $view, QueryPluginBase $query) {
+
+  $current_time = \Drupal::time()->getCurrentTime();
+  $current_time = gmdate("H:i", $current_time);
+  $seconds_of_day = convert_timestamp_to_hours($current_time);
+
+  if ($view
+    ->id() == 'cardapioview') {
+    // Traverse through the 'where' part of the query.
+    foreach ($query->where as &$condition_group) {
+      foreach ($condition_group['conditions'] as &$condition) {
+        // If this is the part of the query filtering on CURRENT_TIME, change the
+        // condition to filter on $seconds_of_day.
+        if ($condition['value'] == 'CURRENT_TIME') {
+          $condition['value'] = $seconds_of_day;
+        }
+      }
+    }
+  }
+}
+
+function convert_timestamp_to_hours($timestamp) {
+  $test = explode(":", $timestamp);
+  $hour = intval($test[0]) -3;
+  $min = intval($test[1]);
+  $seconds_of_day = 3600*$hour + 60 * $min;
+  return $seconds_of_day;
+}

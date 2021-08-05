@@ -1,0 +1,65 @@
+<?php
+
+use Drupal\Core\Form\FormStateInterface;
+
+function timeValidate_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+
+  if ($form_id == 'node_criar_cardapio_form') {
+    $form['#validate'][] = 'timeValidate_node_form_submit';
+  }
+
+}
+
+function timeValidate_node_form_submit($form, \Drupal\Core\Form\FormStateInterface $form_state) {
+
+  $inicio_int = array_values($form_state->getValue('field_start_show')[0])[0];
+  $fim_int = array_values($form_state->getValue('field_end_show')[0])[0];
+
+  $verNoite = "18:00";
+  $verMadrugada = "06:00";
+
+  if (strval($inicio_int) != "" && strval($fim_int) != ""){
+
+    $inicio = gmdate("H:i", $inicio_int);
+    $fim = gmdate("H:i", $fim_int);
+
+    if ($inicio == $fim) {
+      $form_state->setErrorByName('field_start_show', t('Os horários de início e fim não podem ser iguais!', ['%field_start_show' => $inicio]));
+    } else {
+
+      if ($inicio < $fim){
+    
+      } else {
+
+        if ($inicio >= $verNoite || $inicio <= $verMadrugada) {
+          if ($fim >= $verNoite || $fim <= $verMadrugada) {
+
+            if ($inicio >= "18:00" && $fim >= "18:00"){
+              if ($inicio > $fim) {
+                $form_state->setErrorByName('field_start_show', t('Horário inicial maior que horário final', ['%field_start_show' => $inicio]));
+              }
+            }
+
+            if ($inicio  <= "06:00" && $inicio  <= "06:00"){
+              if ($inicio > $fim) {
+                $form_state->setErrorByName('field_start_show', t('Horário inicial maior que horário final', ['%field_start_show' => $inicio]));
+              }
+            } 
+
+          } else {
+              $form_state->setErrorByName('field_start_show', t('Horário inicial maior que horário final', ['%field_start_show' => $inicio]));
+            }
+          
+        } else {
+          $form_state->setErrorByName('field_start_show', t('Horário inicial maior que horário final', ['%field_start_show' => $inicio]));
+        }
+
+      }
+   }
+
+  } elseif ($inicio_int == "" || $fim_int == ""){
+      $form_state->setErrorByName('field_start_show', t('Por favor, preencha os dois campos de horário', ['%field_start_show' => $inicio_int]));
+      $form_state->setErrorByName('field_end_show', t('Por favor, preencha os dois campos de horário', ['%field_end_show' => $fim_int]));
+  }
+
+}

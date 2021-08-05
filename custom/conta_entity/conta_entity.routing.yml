@@ -1,0 +1,7 @@
+entity.conta_entity.settings:
+  path: 'admin/structure/conta-entity'
+  defaults:
+    _form: '\Drupal\conta_entity\Form\ContaEntitySettingsForm'
+    _title: 'Conta'
+  requirements:
+    _permission: 'administer conta'

@@ -1,0 +1,5 @@
+pedido.add_form:
+  route_name: entity.pedido.add_form
+  title: 'Add pedido'
+  appears_on:
+    - entity.pedido.collection
